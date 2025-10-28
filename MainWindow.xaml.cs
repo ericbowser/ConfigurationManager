@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Text.Json;
 using ConfigurationManager.Services;
 using ConfigurationManager.Models;
@@ -8,11 +9,13 @@ namespace ConfigurationManager
     public partial class MainWindow : Window
     {
         private DatabaseService? _databaseService;
+        private EnvConfiguration? _editingConfig;
 
         public MainWindow()
         {
             InitializeComponent();
             LoadConnectionStringFromEnvironment();
+            ConfigJsonTextBox.Text = "{}"; // Set initial valid JSON
         }
 
         private void LoadConnectionStringFromEnvironment()
@@ -21,7 +24,10 @@ namespace ConfigurationManager
             var database = Environment.GetEnvironmentVariable("DB_DATABASE") ?? "yourdb";
             var user = Environment.GetEnvironmentVariable("DB_USER") ?? "youruser";
             var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "yourpass";
-            var port = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+            var portStr = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+            
+            // Validate port is a valid integer
+            var port = int.TryParse(portStr, out var parsedPort) ? parsedPort : 5432;
 
             ConnectionStringTextBox.Text = $"Host={host};Database={database};Username={user};Password={password};Port={port}";
         }
@@ -135,9 +141,9 @@ namespace ConfigurationManager
                 {
                     config = JsonSerializer.Deserialize<Dictionary<string, string>>(configJson);
                 }
-                catch (JsonException)
+                catch (JsonException ex)
                 {
-                    MessageBox.Show("Invalid JSON format in Config field.", "Validation Error", 
+                    MessageBox.Show($"Invalid JSON format in Config field.\n\nError: {ex.Message}", "Validation Error", 
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
@@ -174,6 +180,130 @@ namespace ConfigurationManager
                 AddButton.Content = "Add Configuration";
                 AddButton.IsEnabled = true;
             }
+        }
+
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is EnvConfiguration config)
+            {
+                _editingConfig = config;
+                AddConfigExpander.IsExpanded = true;
+                AddConfigExpander.Header = $"✏️ Edit Configuration (ID: {config.Id})";
+                
+                ProjectNameTextBox.Text = config.Project;
+                UrlTextBox.Text = config.Url ?? string.Empty;
+                ConfigJsonTextBox.Text = config.Config != null 
+                    ? JsonSerializer.Serialize(config.Config, new JsonSerializerOptions { WriteIndented = true })
+                    : "{}";
+                
+                AddButton.Content = "Update Configuration";
+                AddButton.Click -= AddButton_Click;
+                AddButton.Click += UpdateButton_Click;
+            }
+        }
+
+        private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_databaseService == null || _editingConfig == null)
+                return;
+
+            var projectName = ProjectNameTextBox.Text.Trim();
+            var url = UrlTextBox.Text.Trim();
+            var configJson = ConfigJsonTextBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(projectName))
+            {
+                MessageBox.Show("Project name is required.", "Validation Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Dictionary<string, string>? config = null;
+
+            if (!string.IsNullOrWhiteSpace(configJson))
+            {
+                try
+                {
+                    config = JsonSerializer.Deserialize<Dictionary<string, string>>(configJson);
+                }
+                catch (JsonException ex)
+                {
+                    MessageBox.Show($"Invalid JSON format in Config field.\n\nError: {ex.Message}", "Validation Error", 
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            try
+            {
+                AddButton.IsEnabled = false;
+                AddButton.Content = "Updating...";
+
+                await _databaseService.UpdateConfigurationAsync(
+                    _editingConfig.Id,
+                    projectName, 
+                    string.IsNullOrWhiteSpace(url) ? null : url, 
+                    config);
+
+                MessageBox.Show("Configuration updated successfully!", "Success", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Reset form
+                ResetForm();
+
+                // Refresh list
+                await LoadConfigurationsAsync();
+
+                AddButton.Content = "Add Configuration";
+                AddButton.IsEnabled = true;
+                AddButton.Click -= UpdateButton_Click;
+                AddButton.Click += AddButton_Click;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating configuration: {ex.Message}", "Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                AddButton.Content = "Update Configuration";
+                AddButton.IsEnabled = true;
+            }
+        }
+
+        private async void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is EnvConfiguration config)
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete configuration '{config.Project}' (ID: {config.Id})?",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes && _databaseService != null)
+                {
+                    try
+                    {
+                        await _databaseService.DeleteConfigurationAsync(config.Id);
+                        MessageBox.Show("Configuration deleted successfully!", "Success", 
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                        await LoadConfigurationsAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error deleting configuration: {ex.Message}", "Error", 
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
+        private void ResetForm()
+        {
+            _editingConfig = null;
+            AddConfigExpander.IsExpanded = false;
+            AddConfigExpander.Header = "➕ Add New Configuration";
+            ProjectNameTextBox.Clear();
+            UrlTextBox.Clear();
+            ConfigJsonTextBox.Text = "{}";
         }
     }
 }

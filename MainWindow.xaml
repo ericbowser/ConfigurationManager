@@ -62,25 +62,48 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ListBox x:Name="ConfigurationsListBox" Background="Transparent" 
                         BorderThickness="0" Padding="5">
-                    <ListBox.ItemTemplate>
+                      <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#4c4c4c" Margin="5" Padding="10" CornerRadius="3">
                                 <StackPanel>
-                                    <TextBlock FontWeight="Bold" FontSize="14" Foreground="White">
-                                        <Run Text="ID: "/><Run Text="{Binding Id}"/>
-                                    </TextBlock>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0" FontWeight="Bold" FontSize="14" Foreground="White">
+                                            <Run Text="ID: "/><Run Text="{Binding Id}"/>
+                                        </TextBlock>
+                                        
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <Button Content="✏️ Edit" Click="EditButton_Click" 
+                                                   Margin="5,0,5,0" Padding="10,5"
+                                                   Background="#28a745" Foreground="White" BorderThickness="0"
+                                                   Cursor="Hand" Tag="{Binding}"/>
+                                            <Button Content="🗑️ Delete" Click="DeleteButton_Click"
+                                                   Margin="5,0,0,0" Padding="10,5"
+                                                   Background="#dc3545" Foreground="White" BorderThickness="0"
+                                                   Cursor="Hand" Tag="{Binding}"/>
+                                        </StackPanel>
+                                    </Grid>
                                     <TextBlock Foreground="#ddd" Margin="0,5,0,0">
                                         <Run Text="Project: " FontWeight="SemiBold"/><Run Text="{Binding Project}"/>
                                     </TextBlock>
                                     <TextBlock Foreground="#ddd" Margin="0,2,0,0">
                                         <Run Text="URL: " FontWeight="SemiBold"/><Run Text="{Binding Url}"/>
                                     </TextBlock>
-                                    <TextBlock Text="Config:" FontWeight="SemiBold" Foreground="#ddd" Margin="0,5,0,2">
-                                    <TextBox Text="{Binding ConfigDisplay, Source=ItemsSource}" IsReadOnly="True" 
-                                            TextWrapping="Wrap" Background="#555" Foreground="#aaa"
-                                            BorderThickness="0" Padding="5" MaxHeight="150"
-                                            VerticalScrollBarVisibility="Auto" />
-                                    </TextBlock>
+                                    <TextBlock Text="Config:" FontWeight="SemiBold" Foreground="#ddd" Margin="0,5,0,2"/>
+                                    <TextBox Text="{Binding ConfigDisplay, Mode=OneWay}" 
+                                            IsReadOnly="True"
+                                            TextWrapping="Wrap" 
+                                            Background="#555" 
+                                            Foreground="#aaa"
+                                            BorderThickness="0"
+                                            Padding="5"
+                                            MaxHeight="150"
+                                            VerticalScrollBarVisibility="Auto"
+                                            IsReadOnlyCaretVisible="True" />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -126,7 +149,7 @@
                             Padding="5" Background="#555" Foreground="White" BorderBrush="#666"
                             Height="100" TextWrapping="Wrap" AcceptsReturn="True"
                             VerticalScrollBarVisibility="Auto"
-                            Text="{}{}" Margin="0,0,0,10"/>
+                            Margin="0,0,0,10"/>
 
                     <!-- Add Button -->
                     <Button x:Name="AddButton" Grid.Row="3" Grid.Column="1" Content="Add Configuration" 

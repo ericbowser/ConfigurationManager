@@ -1,5 +1,6 @@
 using ConfigurationManager.Models;
 using Npgsql;
+using NpgsqlTypes;
 using System.Text.Json;
 
 namespace ConfigurationManager.Services
@@ -64,11 +65,55 @@ namespace ConfigurationManager.Services
             cmd.Parameters.AddWithValue("project", project);
             cmd.Parameters.AddWithValue("url", (object?)url ?? DBNull.Value);
             
-            var configJson = config != null ? JsonSerializer.Serialize(config) : "{}";
-            cmd.Parameters.AddWithValue("config", configJson);
+            if (config != null)
+            {
+                var configJson = JsonSerializer.Serialize(config);
+                cmd.Parameters.AddWithValue("config", NpgsqlDbType.Jsonb, configJson);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("config", NpgsqlDbType.Jsonb, "{}");
+            }
 
             var result = await cmd.ExecuteScalarAsync();
             return result != null ? Convert.ToInt32(result) : 0;
+        }
+
+        public async Task UpdateConfigurationAsync(int id, string project, string? url, Dictionary<string, string>? config)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            var sql = "UPDATE config.env SET project = @project, url = @url, config = @config::jsonb WHERE id = @id";
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("project", project);
+            cmd.Parameters.AddWithValue("url", (object?)url ?? DBNull.Value);
+            
+            if (config != null)
+            {
+                var configJson = JsonSerializer.Serialize(config);
+                cmd.Parameters.AddWithValue("config", NpgsqlDbType.Jsonb, configJson);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("config", NpgsqlDbType.Jsonb, "{}");
+            }
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task DeleteConfigurationAsync(int id)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            var sql = "DELETE FROM config.env WHERE id = @id";
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", id);
+
+            await cmd.ExecuteNonQueryAsync();
         }
 
         public async Task<bool> TestConnectionAsync()
