@@ -305,5 +305,23 @@ namespace ConfigurationManager
             UrlTextBox.Clear();
             ConfigJsonTextBox.Text = "{}";
         }
+
+        private void CopyConfigButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is EnvConfiguration config)
+            {
+                try
+                {
+                    Clipboard.SetText(config.ConfigDisplay ?? string.Empty);
+                    MessageBox.Show("Config copied to clipboard!", "Success", 
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to copy to clipboard: {ex.Message}", "Error", 
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
     }
 }
