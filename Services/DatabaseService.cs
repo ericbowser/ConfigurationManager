@@ -129,5 +129,54 @@ namespace ConfigurationManager.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Exports a configuration to .env file format
+        /// </summary>
+        public async Task<string> ExportToEnvFormatAsync(int configId)
+        {
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            var sql = "SELECT project, config FROM config.env WHERE id = @id";
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("id", configId);
+            
+            await using var reader = await cmd.ExecuteReaderAsync();
+            
+            if (await reader.ReadAsync())
+            {
+                var project = reader.GetString(0);
+                var envContent = new System.Text.StringBuilder();
+                
+                envContent.AppendLine($"# Configuration for {project}");
+                envContent.AppendLine($"# Generated on {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                envContent.AppendLine();
+
+                if (!reader.IsDBNull(1))
+                {
+                    var jsonString = reader.GetString(1);
+                    var config = JsonSerializer.Deserialize<Dictionary<string, string>>(jsonString);
+                    
+                    if (config != null)
+                    {
+                        foreach (var kvp in config.OrderBy(x => x.Key))
+                        {
+                            // Escape values that contain special characters
+                            var value = kvp.Value;
+                            if (value.Contains(' ') || value.Contains('#') || value.Contains('='))
+                            {
+                                value = $"\"{value}\"";
+                            }
+                            envContent.AppendLine($"{kvp.Key}={value}");
+                        }
+                    }
+                }
+
+                return envContent.ToString();
+            }
+
+            throw new Exception($"Configuration with ID {configId} not found.");
+        }
     }
 }
