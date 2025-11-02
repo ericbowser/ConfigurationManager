@@ -4,3 +4,6 @@ obj/
 .vs
 .idea
 ../.idea/
+
+database/env_config.sql
+database/setup.sql
