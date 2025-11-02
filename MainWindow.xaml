@@ -36,7 +36,7 @@
                 
                 <Button x:Name="ConnectButton" Grid.Column="2" Content="Connect" 
                        Click="ConnectButton_Click" Margin="10,0,0,0" Padding="15,5"
-                       Background="#0078d4" Foreground="White" BorderThickness="0"
+                       Background="black" Foreground="White" BorderThickness="0"
                        Cursor="Hand"/>
             </Grid>
         </Border>
@@ -53,7 +53,7 @@
             
             <Button x:Name="RefreshButton" Grid.Column="1" Content="🔄 Refresh" 
                    Click="RefreshButton_Click" Padding="15,5"
-                   Background="#555" Foreground="White" BorderThickness="0"
+                    Foreground="#dc3545" BorderThickness="0"
                    Cursor="Hand" IsEnabled="False"/>
         </Grid>
 
