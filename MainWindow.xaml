@@ -1,14 +1,13 @@
 ﻿<Window x:Class="ConfigurationManager.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns="http://schemas.microsoft.com/winfx/2007/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2007/xaml"
         xmlns:local="clr-namespace:ConfigurationManager"
+        xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         mc:Ignorable="d"
-        Title="Configuration Manager" Height="600" Width="900"
-        Background="#2b2b2b">
+        Title="Configuration Manager" Height="651" Width="950"
+        Background="#3b2b2b">
     
-    <Grid Margin="10">
+    <av:Grid Margin="11">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -17,107 +16,150 @@
         </Grid.RowDefinitions>
 
         <!-- Connection Settings -->
-        <Border Grid.Row="0" Background="#3c3c3c" Padding="10" CornerRadius="5" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="#3c3c3c" Padding="10" CornerRadius="5" Margin="0,0,0,10">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Connection String Row -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Connection String:" 
-                          VerticalAlignment="Center" Margin="0,0,10,0"
-                          Foreground="White"/>
+                    <TextBlock Grid.Column="1" Text="Connection String:" 
+                              VerticalAlignment="Center" Margin="1,0,10,0"
+                              Foreground="White"/>
+                    
+                    <TextBox x:Name="ConnectionStringTextBox" Grid.Column="2" 
+                            Padding="6" Background="#555" Foreground="White"
+                            BorderBrush="#667" VerticalAlignment="Center"/>
+                    
+                    <Button x:Name="LoadEnvButton" Grid.Column="3" Content="📥 Load from ENV" 
+                           Click="LoadEnvButton_Click" Margin="11,0,5,0" Padding="12,5"
+                           Background="#7c757d" Foreground="White" BorderThickness="0"
+                           Cursor="Hand" ToolTip="Load connection string from environment variables (DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_PORT)"/>
+                    
+                    <Button x:Name="ConnectButton" Grid.Column="4" Content="Connect" 
+                           Click="ConnectButton_Click" Margin="6,0,0,0" Padding="15,5"
+                           Background="black" Foreground="White" BorderThickness="1"
+                           Cursor="Hand"/>
+                </Grid>
                 
-                <TextBox x:Name="ConnectionStringTextBox" Grid.Column="1" 
-                        Padding="5" Background="#555" Foreground="White"
-                        BorderBrush="#666" VerticalAlignment="Center"
-                        Text="Host=localhost;Database=yourdb;Username=youruser;Password=yourpass"/>
-                
-                <Button x:Name="ConnectButton" Grid.Column="2" Content="Connect" 
-                       Click="ConnectButton_Click" Margin="10,0,0,0" Padding="15,5"
-                       Background="black" Foreground="White" BorderThickness="0"
-                       Cursor="Hand"/>
+                <!-- Status Row -->
+                <TextBlock x:Name="ConnectionStatusText" Grid.Row="2" 
+                          Margin="1,5,0,0" FontSize="11" Foreground="#999"
+                          Text="Not connected"/>
             </Grid>
         </Border>
 
         <!-- Title and Refresh Button -->
-        <Grid Grid.Row="1" Margin="0,0,0,10">
+        <Grid Grid.Row="2" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             
-            <TextBlock Grid.Column="0" Text="Configurations" FontSize="20" FontWeight="Bold" 
+            <TextBlock Grid.Column="1" Text="Configurations" FontSize="20" FontWeight="Bold" 
                       Foreground="White" VerticalAlignment="Center"/>
             
-            <Button x:Name="RefreshButton" Grid.Column="1" Content="🔄 Refresh" 
-                   Click="RefreshButton_Click" Padding="15,5"
-                    Foreground="#dc3545" BorderThickness="0"
+            <Button x:Name="RefreshButton" Grid.Column="2" Content="🔄 Refresh" 
+                   Click="RefreshButton_Click" Padding="16,5"
+                   Background="#18a2b8" Foreground="White" BorderThickness="0"
                    Cursor="Hand" IsEnabled="False"/>
         </Grid>
 
-        <!-- Configurations List -->
-        <Border Grid.Row="2" Background="#3c3c3c" CornerRadius="5" Margin="0,0,0,10">
+        <!-- Configurations List with Expanders -->
+        <Border Grid.Row="3" Background="#3c3c3c" CornerRadius="5" Margin="0,0,0,10">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ListBox x:Name="ConfigurationsListBox" Background="Transparent" 
-                        BorderThickness="0" Padding="5">
-                      <ListBox.ItemTemplate>
+                        BorderThickness="1" Padding="5">
+                    <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="#4c4c4c" Margin="5" Padding="10" CornerRadius="3">
-                                <StackPanel>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <TextBlock Grid.Column="0" FontWeight="Bold" FontSize="14" Foreground="White">
-                                            <Run Text="ID: "/><Run Text="{Binding Id}"/>
-                                        </TextBlock>
-                                        
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <Button Content="✏️ Edit" Click="EditButton_Click" 
-                                                   Margin="5,0,5,0" Padding="10,5"
-                                                   Background="#28a745" Foreground="White" BorderThickness="0"
-                                                   Cursor="Hand" Tag="{Binding}"/>
-                                            <Button Content="🗑️ Delete" Click="DeleteButton_Click"
-                                                   Margin="5,0,0,0" Padding="10,5"
-                                                   Background="#dc3545" Foreground="White" BorderThickness="0"
-                                                   Cursor="Hand" Tag="{Binding}"/>
+                            <Border Background="#5c4c4c" Margin="5" CornerRadius="3">
+                                <Expander Background="Transparent">
+                                    <Expander.Header>
+                                        <Grid Width="801">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <TextBlock Text="🔹 " Foreground="#18a2b8" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Project}" FontWeight="Bold" FontSize="15" 
+                                                          Foreground="White" VerticalAlignment="Center" Margin="1,0,10,0"/>
+                                                <TextBlock Text="{Binding Id, StringFormat='(ID: {1})'}" FontSize="12" 
+                                                          Foreground="#1000" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                <Button Content="✏️" Click="EditButton_Click" 
+                                                       Width="31" Height="30" Margin="5,0"
+                                                       Background="#29a745" Foreground="White" BorderThickness="0"
+                                                       Cursor="Hand" Tag="{Binding}" ToolTip="Edit"/>
+                                                <Button Content="🗑️" Click="DeleteButton_Click"
+                                                       Width="31" Height="30"
+                                                       Background="#dc3546" Foreground="White" BorderThickness="0"
+                                                       Cursor="Hand" Tag="{Binding}" ToolTip="Delete"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Expander.Header>
+                                    
+                                    <Border Background="#556" Padding="15" Margin="5" CornerRadius="3">
+                                        <StackPanel>
+                                            <!-- URL Section -->
+                                            <Border Background="#667" Padding="10" CornerRadius="3" Margin="0,0,0,10">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <TextBlock Grid.Column="1" Text="🔗 URL:" FontWeight="SemiBold" 
+                                                              Foreground="White" VerticalAlignment="Center" Margin="1,0,10,0"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Url}" Foreground="#ddd" 
+                                                              TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                            
+                                            <!-- Configuration Section -->
+                                            <Border Background="#667" Padding="10" CornerRadius="3">
+                                                <StackPanel>
+                                                    <Grid Margin="1,0,0,10">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <TextBlock Grid.Column="1" Text="⚙️ Configuration:" FontWeight="SemiBold" 
+                                                                  Foreground="White" VerticalAlignment="Center"/>
+                                                        
+                                                        <Button Grid.Column="3" Content="📋 Copy JSON" Click="CopyConfigButton_Click" 
+                                                               Padding="11,5" Background="#17a2b8" Foreground="White" 
+                                                               BorderThickness="1" Cursor="Hand" Tag="{Binding}"
+                                                               ToolTip="Copy configuration to clipboard"/>
+                                                    </Grid>
+                                                    
+                                                    <Border Background="#445" CornerRadius="3" Padding="10">
+                                                        <TextBox Text="{Binding ConfigDisplay, Mode=OneWay}" 
+                                                                IsReadOnly="True" TextWrapping="Wrap" 
+                                                                Background="Transparent" Foreground="#e1e0e0"
+                                                                BorderThickness="1" FontFamily="Consolas"
+                                                                VerticalScrollBarVisibility="Auto"
+                                                                MaxHeight="201" IsReadOnlyCaretVisible="True" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
-                                    </Grid>
-                                    <TextBlock Foreground="#ddd" Margin="0,5,0,0">
-                                        <Run Text="Project: " FontWeight="SemiBold"/><Run Text="{Binding Project}"/>
-                                    </TextBlock>
-                                    <TextBlock Foreground="#ddd" Margin="0,2,0,0">
-                                        <Run Text="URL: " FontWeight="SemiBold"/><Run Text="{Binding Url}"/>
-                                    </TextBlock>
-                                    <Grid Margin="0,5,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <TextBlock Grid.Column="0" Text="Config:" FontWeight="SemiBold" Foreground="#ddd" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                        
-                                        <Button Grid.Column="2" Content="📋 Copy" Click="CopyConfigButton_Click" 
-                                               Margin="5,0,0,0" Padding="10,5"
-                                               Background="#555" Foreground="White" BorderThickness="0"
-                                               Cursor="Hand" Tag="{Binding}"/>
-                                    </Grid>
-                                    <TextBox Text="{Binding ConfigDisplay, Mode=OneWay}" 
-                                            IsReadOnly="True"
-                                            TextWrapping="Wrap" 
-                                            Background="#555" 
-                                            Foreground="#aaa"
-                                            BorderThickness="0"
-                                            Padding="5"
-                                            MaxHeight="150"
-                                            VerticalScrollBarVisibility="Auto"
-                                            IsReadOnlyCaretVisible="True" />
-                                </StackPanel>
+                                    </Border>
+                                </Expander>
                             </Border>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -126,10 +168,10 @@
         </Border>
 
         <!-- Add New Configuration Panel -->
-        <Border Grid.Row="3" Background="#3c3c3c" Padding="15" CornerRadius="5">
+        <Border Grid.Row="4" Background="#3c3c3c" Padding="15" CornerRadius="5">
             <Expander Header="➕ Add New Configuration" Foreground="White" 
                      x:Name="AddConfigExpander" IsEnabled="False">
-                <Grid Margin="0,10,0,0">
+                <Grid Margin="1,10,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -137,40 +179,40 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="101"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Project Name -->
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Project:" 
-                              VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"/>
-                    <TextBox x:Name="ProjectNameTextBox" Grid.Row="0" Grid.Column="1" 
-                            Padding="5" Background="#555" Foreground="White" BorderBrush="#666"
-                            Margin="0,0,0,10"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Project:" 
+                              VerticalAlignment="Center" Foreground="White" Margin="1,0,10,0"/>
+                    <TextBox x:Name="ProjectNameTextBox" Grid.Row="1" Grid.Column="1" 
+                            Padding="6" Background="#555" Foreground="White" BorderBrush="#666"
+                            Margin="1,0,0,10"/>
 
                     <!-- URL -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="URL:" 
-                              VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"/>
-                    <TextBox x:Name="UrlTextBox" Grid.Row="1" Grid.Column="1" 
-                            Padding="5" Background="#555" Foreground="White" BorderBrush="#666"
-                            Margin="0,0,0,10"/>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="URL:" 
+                              VerticalAlignment="Center" Foreground="White" Margin="1,0,10,0"/>
+                    <TextBox x:Name="UrlTextBox" Grid.Row="2" Grid.Column="1" 
+                            Padding="6" Background="#555" Foreground="White" BorderBrush="#666"
+                            Margin="1,0,0,10"/>
 
                     <!-- Config JSON -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Config JSON:" 
-                              VerticalAlignment="Top" Foreground="White" Margin="0,5,10,0"/>
-                    <TextBox x:Name="ConfigJsonTextBox" Grid.Row="2" Grid.Column="1" 
-                            Padding="5" Background="#555" Foreground="White" BorderBrush="#666"
-                            Height="100" TextWrapping="Wrap" AcceptsReturn="True"
-                            VerticalScrollBarVisibility="Auto"
-                            Margin="0,0,0,10"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Config JSON:" 
+                              VerticalAlignment="Top" Foreground="White" Margin="1,5,10,0"/>
+                    <TextBox x:Name="ConfigJsonTextBox" Grid.Row="3" Grid.Column="1" 
+                            Padding="6" Background="#555" Foreground="White" BorderBrush="#666"
+                            Height="101" TextWrapping="Wrap" AcceptsReturn="True"
+                            VerticalScrollBarVisibility="Auto" FontFamily="Consolas"
+                            Margin="1,0,0,10"/>
 
                     <!-- Add Button -->
-                    <Button x:Name="AddButton" Grid.Row="3" Grid.Column="1" Content="Add Configuration" 
-                           Click="AddButton_Click" Padding="15,8" HorizontalAlignment="Right"
-                           Background="#0078d4" Foreground="White" BorderThickness="0"
+                    <Button x:Name="AddButton" Grid.Row="4" Grid.Column="1" Content="Add Configuration" 
+                           Click="AddButton_Click" Padding="16,8" HorizontalAlignment="Right"
+                           Background="#0079d4" Foreground="White" BorderThickness="0"
                            Cursor="Hand" FontWeight="SemiBold"/>
                 </Grid>
             </Expander>
         </Border>
-    </Grid>
+    </av:Grid>
 </Window>

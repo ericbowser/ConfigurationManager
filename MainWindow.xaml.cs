@@ -20,16 +20,38 @@ namespace ConfigurationManager
 
         private void LoadConnectionStringFromEnvironment()
         {
-            var host = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
-            var database = Environment.GetEnvironmentVariable("DB_DATABASE") ?? "yourdb";
-            var user = Environment.GetEnvironmentVariable("DB_USER") ?? "youruser";
-            var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "yourpass";
+            var host = Environment.GetEnvironmentVariable("DB_HOST");
+            var database = Environment.GetEnvironmentVariable("DB_DATABASE");
+            var user = Environment.GetEnvironmentVariable("DB_USERNAME");
+            var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
             var portStr = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
             
             // Validate port is a valid integer
             var port = int.TryParse(portStr, out var parsedPort) ? parsedPort : 5432;
 
-            ConnectionStringTextBox.Text = $"Host={host};Database={database};Username={user};Password={password};Port={port}";
+            // Only populate if we have the essential environment variables
+            if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(database) && 
+                !string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(password))
+            {
+                ConnectionStringTextBox.Text = $"Host={host};Database={database};Username={user};Password={password};Port={port}";
+                ConnectionStatusText.Text = "✓ Loaded from environment variables";
+                ConnectionStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(40, 167, 69));
+            }
+            else
+            {
+                ConnectionStringTextBox.Text = "Host=localhost;Database=yourdb;Username=youruser;Password=yourpass;Port=5432";
+                ConnectionStatusText.Text = "Using default connection string";
+                ConnectionStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(220, 53, 69));
+            }
+        }
+
+        private void LoadEnvButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoadConnectionStringFromEnvironment();
+            MessageBox.Show("Connection string reloaded from environment variables.", "Info", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private async void ConnectButton_Click(object sender, RoutedEventArgs e)
@@ -58,6 +80,9 @@ namespace ConfigurationManager
                     ConnectButton.Content = "✓ Connected";
                     ConnectButton.Background = new System.Windows.Media.SolidColorBrush(
                         System.Windows.Media.Color.FromRgb(40, 167, 69));
+                    ConnectionStatusText.Text = "✓ Database connected";
+                    ConnectionStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(40, 167, 69));
                     
                     MessageBox.Show("Connected successfully!", "Success", 
                         MessageBoxButton.OK, MessageBoxImage.Information);
@@ -70,6 +95,9 @@ namespace ConfigurationManager
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     ConnectButton.IsEnabled = true;
                     ConnectButton.Content = "Connect";
+                    ConnectionStatusText.Text = "✗ Connection failed";
+                    ConnectionStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(220, 53, 69));
                 }
             }
             catch (Exception ex)
@@ -78,6 +106,9 @@ namespace ConfigurationManager
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 ConnectButton.IsEnabled = true;
                 ConnectButton.Content = "Connect";
+                ConnectionStatusText.Text = "✗ Connection error";
+                ConnectionStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(220, 53, 69));
             }
         }
 
