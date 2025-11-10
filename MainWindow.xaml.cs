@@ -133,13 +133,13 @@ namespace ConfigurationManager
                 return;
             }
 
-            Dictionary<string, string>? config = null;
+            JsonElement? config = null;
 
             if (!string.IsNullOrWhiteSpace(configJson))
             {
                 try
                 {
-                    config = JsonSerializer.Deserialize<Dictionary<string, string>>(configJson);
+                    config = JsonSerializer.Deserialize<JsonElement>(configJson);
                 }
                 catch (JsonException ex)
                 {
@@ -157,7 +157,7 @@ namespace ConfigurationManager
                 var newId = await _databaseService.AddConfigurationAsync(
                     projectName, 
                     string.IsNullOrWhiteSpace(url) ? null : url, 
-                    config);
+                    FlattenJsonElement(config));
 
                 MessageBox.Show($"Configuration added successfully with ID: {newId}", "Success", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
@@ -218,13 +218,13 @@ namespace ConfigurationManager
                 return;
             }
 
-            Dictionary<string, string>? config = null;
+            JsonElement? config = null;
 
             if (!string.IsNullOrWhiteSpace(configJson))
             {
                 try
                 {
-                    config = JsonSerializer.Deserialize<Dictionary<string, string>>(configJson);
+                    config = JsonSerializer.Deserialize<JsonElement>(configJson);
                 }
                 catch (JsonException ex)
                 {
@@ -243,7 +243,7 @@ namespace ConfigurationManager
                     _editingConfig.Id,
                     projectName, 
                     string.IsNullOrWhiteSpace(url) ? null : url, 
-                    config);
+                    FlattenJsonElement(config));
 
                 MessageBox.Show("Configuration updated successfully!", "Success", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
@@ -320,6 +320,49 @@ namespace ConfigurationManager
                 {
                     MessageBox.Show($"Failed to copy to clipboard: {ex.Message}", "Error", 
                         MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private Dictionary<string, string>? FlattenJsonElement(JsonElement? element)
+        {
+            if (!element.HasValue || element.Value.ValueKind != JsonValueKind.Object)
+                return null;
+
+            var result = new Dictionary<string, string>();
+            FlattenJsonObject(element.Value, result, "");
+            return result;
+        }
+
+        private void FlattenJsonObject(JsonElement element, Dictionary<string, string> result, string prefix)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                var key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}__{property.Name}";
+                
+                switch (property.Value.ValueKind)
+                {
+                    case JsonValueKind.Object:
+                        FlattenJsonObject(property.Value, result, key);
+                        break;
+                    case JsonValueKind.Array:
+                        var index = 0;
+                        foreach (var item in property.Value.EnumerateArray())
+                        {
+                            if (item.ValueKind == JsonValueKind.Object)
+                            {
+                                FlattenJsonObject(item, result, $"{key}[{index}]");
+                            }
+                            else
+                            {
+                                result[$"{key}[{index}]"] = item.GetRawText().Trim('"');
+                            }
+                            index++;
+                        }
+                        break;
+                    default:
+                        result[key] = property.Value.GetRawText().Trim('"');
+                        break;
                 }
             }
         }
